@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programlar | FİTNESS101</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">FİTNESS101</div>
+            <ul class="nav-links">
+                <li><a href="index.html">Anasayfa</a></li>
+                <li><a href="user-dashboard.php">Panelim</a></li>
+                <li><a href="programs.html" class="active">Programlar</a></li>
+                <li><a href="contact.html">İletişim</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero hero-programs">
+        <div class="hero-content">
+            <h1>Antrenman Programları</h1>
+            <p>Hedeflerinize ulaşmak için tasarlanmış programlar</p>
+        </div>
+    </section>
+
+    <!-- Programs Section -->
+    <section class="programs-detail">
+        <div class="container">
+            <div class="filters">
+                <button class="filter-btn active" data-filter="all">Tümü</button>
+                <button class="filter-btn" data-filter="strength">Güç</button>
+                <button class="filter-btn" data-filter="cardio">Kardiyovasküler</button>
+                <button class="filter-btn" data-filter="flexibility">Esneklik</button>
+                <button class="filter-btn" data-filter="weight">Kilo Vermek</button>
+            </div>
+            <div class="programs-grid" id="detailedProgramsGrid">
+                <!-- JavaScript ile eklenecek -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 FİTNESS101. Tüm hakları saklıdır.</p>
+            <div class="footer-links">
+                <a href="#">Gizlilik Politikası</a>
+                <a href="#">Kullanım Koşulları</a>
+                <a href="#">İletişim</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
