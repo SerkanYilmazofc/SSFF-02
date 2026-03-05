@@ -3,8 +3,9 @@
 -- Veritabanı adı: fitness101
 -- ================================================================
 
-CREATE DATABASE IF NOT EXISTS fitness101 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE fitness101;
+-- cPanel'de bu iki satır gerekli değil (veritabanını zaten cPanel'den oluşturdun):
+-- CREATE DATABASE IF NOT EXISTS fitness101 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+-- USE fitness101;
 
 -- ================================================================
 -- 1. Kullanıcılar Tablosu
@@ -21,6 +22,7 @@ CREATE TABLE IF NOT EXISTS users (
     address VARCHAR(255) DEFAULT NULL,
     is_admin TINYINT(1) DEFAULT 0,
     is_active TINYINT(1) DEFAULT 1,
+    trainer_id INT DEFAULT NULL,
     last_login DATETIME DEFAULT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
@@ -99,8 +101,8 @@ INSERT INTO users (username, email, password, full_name, is_admin, is_active)
 VALUES ('admin', 'admin@fitness101.com', SHA2('admin123', 256), 'Admin Kullanıcı', 1, 1)
 ON DUPLICATE KEY UPDATE username=username;
 
-INSERT INTO users (username, email, password, full_name, phone, age, gender, is_admin, is_active)
-VALUES ('demo', 'demo@fitness101.com', SHA2('Demo1234', 256), 'Demo Kullanıcı', '555-0000', 25, 'Erkek', 0, 1)
+INSERT INTO users (username, email, password, full_name, phone, age, gender, is_admin, is_active, trainer_id)
+VALUES ('demo', 'demo@fitness101.com', SHA2('Demo1234', 256), 'Demo Kullanıcı', '555-0000', 25, 'Erkek', 0, 1, 1)
 ON DUPLICATE KEY UPDATE username=username;
 
 -- ================================================================

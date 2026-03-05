@@ -14,7 +14,7 @@ if ($username === '' || $password === '') {
     exit;
 }
 
-$stmt = $conn->prepare("SELECT id, username, email, full_name, password, is_admin, is_active FROM users WHERE (username = ? OR email = ?) LIMIT 1");
+$stmt = $conn->prepare("SELECT id, username, email, full_name, password, is_admin, is_active, gender FROM users WHERE (username = ? OR email = ?) LIMIT 1");
 $stmt->bind_param('ss', $username, $username);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -36,6 +36,7 @@ $_SESSION['username'] = $user['username'];
 $_SESSION['email'] = $user['email'];
 $_SESSION['full_name'] = $user['full_name'];
 $_SESSION['is_admin'] = ((int)$user['is_admin'] === 1);
+$_SESSION['gender'] = $user['gender'] ?? 'Erkek';
 $_SESSION['logged_in'] = true;
 $_SESSION['login_time'] = time();
 

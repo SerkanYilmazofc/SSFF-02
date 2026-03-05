@@ -5,7 +5,7 @@ require_once 'config.php';
 
 // POST kontrolü
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: register.html');
+    header('Location: register.php');
     exit();
 }
 
@@ -19,6 +19,7 @@ $gender = isset($_POST['gender']) ? trim($_POST['gender']) : null;
 $address = isset($_POST['address']) ? trim($_POST['address']) : '';
 $password = isset($_POST['password']) ? $_POST['password'] : '';
 $password_confirm = isset($_POST['password_confirm']) ? $_POST['password_confirm'] : '';
+$trainer_id = isset($_POST['trainer_id']) ? (int)$_POST['trainer_id'] : 0;
 
 // Validasyon
 $errors = array();
@@ -51,10 +52,19 @@ if ($password !== $password_confirm) {
     $errors[] = 'Şifreler eşleşmiyor!';
 }
 
+if ($trainer_id <= 0) {
+    $errors[] = 'Lütfen bir antrenör seçiniz!';
+} else {
+    $tcheck = $conn->query("SELECT id FROM users WHERE id=$trainer_id AND is_admin=1 AND is_active=1");
+    if (!$tcheck || $tcheck->num_rows === 0) {
+        $errors[] = 'Geçersiz antrenör seçimi!';
+    }
+}
+
 // Hata varsa önceki sayfaya yönlendir
 if (!empty($errors)) {
     $error_msg = urlencode($errors[0]);
-    header('Location: register.html?error=' . $error_msg);
+    header('Location: register.php?error=' . $error_msg);
     exit();
 }
 
@@ -70,7 +80,7 @@ $check_query = "SELECT id FROM users WHERE username = '$username' OR email = '$e
 $check_result = $conn->query($check_query);
 
 if ($check_result && $check_result->num_rows > 0) {
-    header('Location: register.html?error=' . urlencode('Bu kullanıcı adı veya email zaten kullanılıyor!'));
+    header('Location: register.php?error=' . urlencode('Bu kullanıcı adı veya email zaten kullanılıyor!'));
     exit();
 }
 
@@ -78,8 +88,8 @@ if ($check_result && $check_result->num_rows > 0) {
 $hashed_password = hash('sha256', $password);
 
 // Veritabanına kaydet
-$insert_query = "INSERT INTO users (username, email, password, full_name, phone, age, gender, address, is_active) 
-                 VALUES ('$username', '$email', '$hashed_password', '$full_name', '$phone', " . ($age ?: 'NULL') . ", " . ($gender ? "'$gender'" : 'NULL') . ", '$address', TRUE)";
+$insert_query = "INSERT INTO users (username, email, password, full_name, phone, age, gender, address, is_active, trainer_id) 
+                 VALUES ('$username', '$email', '$hashed_password', '$full_name', '$phone', " . ($age ?: 'NULL') . ", " . ($gender ? "'$gender'" : 'NULL') . ", '$address', TRUE, $trainer_id)";
 
 if ($conn->query($insert_query)) {
     // Başarılı kayıt
@@ -98,7 +108,7 @@ if ($conn->query($insert_query)) {
 } else {
     // Veritabanı hatası
     error_log('Register Error: ' . $conn->error);
-    header('Location: register.html?error=' . urlencode('Bir hata oluştu. Lütfen daha sonra tekrar deneyiniz!'));
+    header('Location: register.php?error=' . urlencode('Bir hata oluştu. Lütfen daha sonra tekrar deneyiniz!'));
     exit();
 }
 

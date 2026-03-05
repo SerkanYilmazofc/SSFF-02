@@ -49,6 +49,7 @@ $u = getCurrentUser();
             <p>Hoş geldin, <?= htmlspecialchars($u['full_name'] ?: $u['username']) ?></p>
         </div>
         <div class="actions">
+            <a style="background:#7c3aed;color:#e9d5ff;border:none" href="manager-login.php">Yönetici Paneli</a>
             <a class="back" href="user-dashboard.php">Kullanıcı Paneli</a>
             <a class="out" href="logout.php">Çıkış</a>
         </div>
@@ -86,11 +87,48 @@ $u = getCurrentUser();
             </form>
         </div>
 
-        <div class="card">
-            <h2>Program Listesi</h2>
+        <div>
+            <div class="card" style="margin-bottom:16px">
+                <h2>Program Listesi</h2>
+                <table>
+                    <thead><tr><th>Program</th><th>Süre</th><th>Hareket</th><th>Tarih</th></tr></thead>
+                    <tbody id="programRows"><tr><td colspan="4">Yükleniyor...</td></tr></tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h2>Antrenör Listesi</h2>
+                <p style="color:#6b7280;font-size:.82rem;margin-bottom:10px">Yeni antrenör eklemek için <a href="manager-login.php" style="color:#93c5fd">Yönetici Paneli</a>'ni kullanın.</p>
+                <table>
+                    <thead><tr><th>Ad Soyad</th><th>Kullanıcı Adı</th><th>Email</th><th>Öğrenci</th></tr></thead>
+                    <tbody id="trainerRows"><tr><td colspan="4">Yükleniyor...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+        <h2>Öğrenci Takibi</h2>
+        <table>
+            <thead><tr><th>Ad Soyad</th><th>Kullanıcı</th><th>Son Kilo</th><th>Son Kayıt</th><th>Toplam Giriş</th><th>İşlem</th></tr></thead>
+            <tbody id="studentRows"><tr><td colspan="6">Yükleniyor...</td></tr></tbody>
+        </table>
+    </div>
+
+    <div id="studentDetail" class="card" style="margin-top:16px;display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <h2 id="sdTitle">Öğrenci Detay</h2>
+            <button class="btn secondary" onclick="document.getElementById('studentDetail').style.display='none'">Kapat</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+            <input type="date" id="sdFrom" style="width:auto">
+            <input type="date" id="sdTo" style="width:auto">
+            <button class="btn primary" onclick="loadStudentLogs()">Filtrele</button>
+        </div>
+        <div style="overflow-x:auto">
             <table>
-                <thead><tr><th>Program</th><th>Süre</th><th>Hareket</th><th>Tarih</th></tr></thead>
-                <tbody id="programRows"><tr><td colspan="4">Yükleniyor...</td></tr></tbody>
+                <thead><tr><th>Tarih</th><th>Kilo</th><th>Boy</th><th>Kalori</th><th>Bel</th><th>BMI</th><th>Yağ%</th><th>Antrenman</th></tr></thead>
+                <tbody id="sdRows"><tr><td colspan="8">Veri yok.</td></tr></tbody>
             </table>
         </div>
     </div>
@@ -173,6 +211,75 @@ document.getElementById('programForm').addEventListener('submit', function(e){
 });
 addExercise();
 loadPrograms();
+
+function loadTrainers(){
+    fetch('api.php?action=admin_list_trainers')
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+            var rows=document.getElementById('trainerRows');
+            var list=res.trainers||[];
+            if(!res.success||list.length===0){ rows.innerHTML='<tr><td colspan="4">Antrenör yok.</td></tr>'; return; }
+            rows.innerHTML=list.map(function(t){
+                return '<tr><td>'+t.full_name+'</td><td>'+t.username+'</td><td>'+t.email+'</td><td>'+t.student_count+'</td></tr>';
+            }).join('');
+        })
+        .catch(function(){});
+}
+loadTrainers();
+
+var selectedStudentId = null;
+function loadStudents(){
+    fetch('api.php?action=admin_list_my_users')
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+            var rows=document.getElementById('studentRows');
+            var list=res.users||[];
+            if(!res.success||list.length===0){ rows.innerHTML='<tr><td colspan="6">Henüz öğrenciniz yok.</td></tr>'; return; }
+            rows.innerHTML=list.map(function(u){
+                return '<tr><td>'+(u.full_name||'-')+'</td><td>'+u.username+'</td><td>'+(u.last_weight?u.last_weight+' kg':'-')+'</td><td>'+(u.last_log_date||'-')+'</td><td>'+u.log_count+'</td><td><button class="btn primary" onclick="openStudent('+u.id+',\''+((u.full_name||u.username).replace(/'/g,"\\'"))+'\')">Detay</button></td></tr>';
+            }).join('');
+        })
+        .catch(function(){});
+}
+loadStudents();
+
+function calcBMI(w,h){ if(!w||!h)return null; var hm=h/100; return (w/(hm*hm)).toFixed(1); }
+function calcBF(g,waist,neck,hip,h){
+    if(!waist||!neck||!h||waist<=neck)return null;
+    if(g==='Kadın'){ if(!hip)return null; var bf=163.205*Math.log10(waist+hip-neck)-97.684*Math.log10(h)-78.387; return bf>0&&bf<60?bf.toFixed(1):null; }
+    var bf=86.010*Math.log10(waist-neck)-70.041*Math.log10(h)+36.76; return bf>0&&bf<50?bf.toFixed(1):null;
+}
+
+function openStudent(uid, name){
+    selectedStudentId = uid;
+    document.getElementById('sdTitle').textContent = name + ' - Günlük Verileri';
+    var now=new Date();
+    document.getElementById('sdFrom').value = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-01';
+    document.getElementById('sdTo').value = now.toISOString().split('T')[0];
+    document.getElementById('studentDetail').style.display = 'block';
+    loadStudentLogs();
+    document.getElementById('studentDetail').scrollIntoView({behavior:'smooth'});
+}
+function loadStudentLogs(){
+    if(!selectedStudentId)return;
+    var from=document.getElementById('sdFrom').value;
+    var to=document.getElementById('sdTo').value;
+    fetch('api.php?action=admin_get_user_logs&user_id='+selectedStudentId+'&from='+from+'&to='+to)
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+            var rows=document.getElementById('sdRows');
+            var logs=res.logs||[];
+            var gender=(res.user&&res.user.gender)||'Erkek';
+            if(logs.length===0){ rows.innerHTML='<tr><td colspan="8">Bu dönemde veri yok.</td></tr>'; return; }
+            rows.innerHTML=logs.map(function(l){
+                var bmi=calcBMI(parseFloat(l.weight),parseFloat(l.height));
+                var bf=calcBF(gender,parseFloat(l.waist),parseFloat(l.neck),parseFloat(l.hip),parseFloat(l.height));
+                var wk=parseInt(l.workout_count,10)||0;
+                return '<tr><td>'+l.log_date+'</td><td>'+(l.weight||'-')+' kg</td><td>'+(l.height||'-')+' cm</td><td>'+(l.calories_in||'-')+'</td><td>'+(l.waist||'-')+'</td><td>'+(bmi||'-')+'</td><td>'+(bf?bf+'%':'-')+'</td><td>'+(wk>0?wk+' antrenman':'Yok')+'</td></tr>';
+            }).join('');
+        })
+        .catch(function(){});
+}
 </script>
 </body>
 </html>

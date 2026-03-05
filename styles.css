@@ -359,12 +359,12 @@ html {
 .filter-btn {
     padding: 10px 20px;
     border: 2px solid var(--border-color);
-    background: white;
+    background: var(--card-bg);
     border-radius: 5px;
     cursor: pointer;
     transition: all 0.3s ease;
     font-weight: 600;
-    color: var(--text-dark);
+    color: var(--text-light);
 }
 
 .filter-btn:hover,

@@ -1,0 +1,206 @@
+<?php
+require_once 'config.php';
+$trainers = [];
+$tq = $conn->query("SELECT id, full_name, username FROM users WHERE is_admin=1 AND is_active=1 ORDER BY full_name, username");
+if ($tq) $trainers = $tq->fetch_all(MYSQLI_ASSOC);
+?>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kaydol | FİTNESS101</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .auth-container{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--dark-bg) 0%,var(--light-bg) 100%);padding:20px}
+        .auth-card{background:var(--card-bg);padding:3rem 2.5rem;border-radius:15px;box-shadow:0 10px 40px rgba(0,0,0,.5);border:1px solid var(--border-color);width:100%;max-width:500px;animation:slideUp .5s ease-out}
+        @keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+        .auth-header{text-align:center;margin-bottom:2rem}
+        .auth-header h1{font-size:2.2rem;background:linear-gradient(135deg,var(--primary-color) 0%,var(--secondary-color) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.5rem;font-weight:900}
+        .auth-header p{color:var(--text-light);font-size:.95rem}
+        .form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+        .form-row.full{grid-template-columns:1fr}
+        .form-group{margin-bottom:1.5rem}
+        .form-group label{display:block;margin-bottom:.6rem;color:var(--text-dark);font-weight:600;font-size:.95rem}
+        .form-group input,.form-group select{width:100%;padding:12px 15px;border:2px solid var(--border-color);border-radius:8px;background:var(--dark-bg);color:var(--text-dark);font-size:1rem;transition:all .3s ease;font-family:inherit}
+        .form-group select{cursor:pointer}
+        .form-group input:focus,.form-group select:focus{outline:none;border-color:var(--primary-color);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+        .form-group input::placeholder{color:var(--text-light)}
+        .password-strength{margin-top:.5rem;font-size:.85rem;height:4px;background:var(--border-color);border-radius:2px;overflow:hidden;display:none}
+        .password-strength.show{display:block}
+        .strength-meter{height:100%;width:0%;background:var(--danger-color);transition:all .3s ease}
+        .strength-meter.weak{width:33%;background:var(--danger-color)}
+        .strength-meter.medium{width:66%;background:var(--secondary-color)}
+        .strength-meter.strong{width:100%;background:var(--success-color)}
+        .terms-agree{display:flex;align-items:flex-start;gap:.8rem;margin-bottom:1.5rem;font-size:.9rem}
+        .terms-agree input[type="checkbox"]{width:18px;height:18px;margin-top:2px;cursor:pointer}
+        .terms-agree label{margin:0;color:var(--text-light);cursor:pointer;line-height:1.4}
+        .terms-agree a{color:var(--primary-color);text-decoration:none}
+        .btn-register{width:100%;padding:12px;background:linear-gradient(135deg,var(--primary-color) 0%,var(--secondary-color) 100%);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:1rem;cursor:pointer;transition:all .3s ease;margin-bottom:1rem}
+        .btn-register:hover{transform:translateY(-2px);box-shadow:0 10px 25px rgba(59,130,246,.4)}
+        .btn-register:disabled{opacity:.5;cursor:not-allowed;transform:none}
+        .divider{display:flex;align-items:center;gap:1rem;margin:1.5rem 0;color:var(--text-light);font-size:.85rem}
+        .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border-color)}
+        .login-link{text-align:center;color:var(--text-light);font-size:.95rem}
+        .login-link a{color:var(--primary-color);text-decoration:none;font-weight:700;transition:color .3s ease}
+        .login-link a:hover{color:var(--secondary-color)}
+        .error-message{background:rgba(255,71,87,.1);border:1px solid var(--danger-color);color:#ff7a88;padding:1rem;border-radius:8px;margin-bottom:1.5rem;font-size:.9rem;display:none}
+        .error-message.show{display:block}
+        @media(max-width:600px){.auth-card{padding:2rem 1.5rem}.auth-header h1{font-size:1.8rem}.form-row{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>FİTNESS101</h1>
+                <p>Yeni hesap oluşturun</p>
+            </div>
+
+            <div class="error-message" id="errorMessage"></div>
+
+            <form id="registerForm" method="POST" action="register-process.php">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="username">Kullanıcı Adı *</label>
+                        <input type="text" id="username" name="username" placeholder="Kullanıcı adı" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email Adresi *</label>
+                        <input type="email" id="email" name="email" placeholder="Email adresiniz" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="full_name">Ad Soyad</label>
+                        <input type="text" id="full_name" name="full_name" placeholder="Adınız soyadınız">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Telefon</label>
+                        <input type="tel" id="phone" name="phone" placeholder="(5XX) XXX-XX-XX">
+                    </div>
+                </div>
+
+                <div class="form-group form-row full">
+                    <label for="trainer_id">Antrenörünüzü Seçin *</label>
+                    <select id="trainer_id" name="trainer_id" required>
+                        <option value="">Antrenör seçin...</option>
+                        <?php foreach ($trainers as $t): ?>
+                            <option value="<?= (int)$t['id'] ?>"><?= htmlspecialchars($t['full_name'] ?: $t['username']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="age">Yaş</label>
+                        <input type="number" id="age" name="age" min="16" max="120" placeholder="Yaşınız">
+                    </div>
+                    <div class="form-group">
+                        <label for="gender">Cinsiyet</label>
+                        <select id="gender" name="gender">
+                            <option value="">Seç...</option>
+                            <option value="Erkek">Erkek</option>
+                            <option value="Kadın">Kadın</option>
+                            <option value="Diğer">Diğer</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group form-row full">
+                    <label for="address">Adres</label>
+                    <input type="text" id="address" name="address" placeholder="Ev/İş adresiniz">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="password">Şifre *</label>
+                        <input type="password" id="password" name="password" placeholder="En az 8 karakter" required>
+                        <div class="password-strength" id="strengthMeter">
+                            <div class="strength-meter" id="strengthBar"></div>
+                        </div>
+                        <small style="color:var(--text-light);display:block;margin-top:.5rem">
+                            Büyük/küçük harf + en az bir rakam
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label for="password_confirm">Şifreyi Onayla *</label>
+                        <input type="password" id="password_confirm" name="password_confirm" placeholder="Şifreyi tekrarlayın" required>
+                    </div>
+                </div>
+
+                <div class="terms-agree">
+                    <input type="checkbox" id="terms" name="terms" required>
+                    <label for="terms">
+                        <a href="#">Kullanım Şartlarını</a> ve <a href="#">Gizlilik Politikasını</a> kabul ediyorum
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-register" id="submitBtn">Hesap Oluştur</button>
+
+                <div class="divider">veya</div>
+
+                <div class="login-link">
+                    Zaten hesabınız var mı? <a href="login.html">Giriş Yapın</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        var form = document.getElementById('registerForm');
+        var password = document.getElementById('password');
+        var strengthMeter = document.getElementById('strengthMeter');
+        var strengthBar = document.getElementById('strengthBar');
+        var errorMessage = document.getElementById('errorMessage');
+        var submitBtn = document.getElementById('submitBtn');
+
+        password.addEventListener('input', function() {
+            var pwd = this.value, strength = 0;
+            if (pwd.length >= 8) strength++;
+            if (/[a-z]/.test(pwd) && /[A-Z]/.test(pwd)) strength++;
+            if (/\d/.test(pwd)) strength++;
+            if (/[!@#$%^&*]/.test(pwd)) strength++;
+            strengthMeter.classList.add('show');
+            strengthBar.className = 'strength-meter';
+            if (strength <= 1) strengthBar.classList.add('weak');
+            else if (strength <= 2) strengthBar.classList.add('medium');
+            else strengthBar.classList.add('strong');
+        });
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            var u = document.getElementById('username').value.trim();
+            var em = document.getElementById('email').value.trim();
+            var pwd = document.getElementById('password').value;
+            var pwdC = document.getElementById('password_confirm').value;
+            var terms = document.getElementById('terms').checked;
+            var trainer = document.getElementById('trainer_id').value;
+
+            if (!u || !em || !pwd || !pwdC) { showError('Lütfen tüm zorunlu alanları doldurunuz!'); return; }
+            if (u.length < 3) { showError('Kullanıcı adı en az 3 karakter olmalıdır!'); return; }
+            if (!trainer) { showError('Lütfen bir antrenör seçiniz!'); return; }
+            if (pwd.length < 8) { showError('Şifre en az 8 karakter olmalıdır!'); return; }
+            if (!/[a-z]/.test(pwd) || !/[A-Z]/.test(pwd)) { showError('Şifre büyük ve küçük harf içermelidir!'); return; }
+            if (!/\d/.test(pwd)) { showError('Şifre en az bir rakam içermelidir!'); return; }
+            if (pwd !== pwdC) { showError('Şifreler eşleşmiyor!'); return; }
+            if (!terms) { showError('Şartları kabul etmelisiniz!'); return; }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Hesap oluşturuluyor...';
+            form.submit();
+        });
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+            window.scrollTo(0, 0);
+            setTimeout(function() { errorMessage.classList.remove('show'); }, 5000);
+        }
+
+        var urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('error')) showError(decodeURIComponent(urlParams.get('error')));
+    </script>
+</body>
+</html>

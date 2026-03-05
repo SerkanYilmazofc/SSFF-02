@@ -28,6 +28,6 @@ setcookie('user_id', '', time() - 3600, '/');
 session_destroy();
 
 // Anasayfaya yönlendir
-header('Location: index.html?logout=success');
+header('Location: index.php?logout=success');
 exit();
 ?>

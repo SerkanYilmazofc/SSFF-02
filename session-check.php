@@ -19,7 +19,7 @@ function requireLogin() {
 function requireAdmin() {
     requireLogin();
     if (!isAdmin()) {
-        header('Location: index.html?error=' . urlencode('Bu sayfaya erisim yetkiniz yok.'));
+        header('Location: index.php?error=' . urlencode('Bu sayfaya erisim yetkiniz yok.'));
         exit;
     }
 }
@@ -31,7 +31,8 @@ function getCurrentUser() {
         'username' => $_SESSION['username'] ?? '',
         'email' => $_SESSION['email'] ?? '',
         'full_name' => $_SESSION['full_name'] ?? '',
-        'is_admin' => (bool)($_SESSION['is_admin'] ?? false)
+        'is_admin' => (bool)($_SESSION['is_admin'] ?? false),
+        'gender' => $_SESSION['gender'] ?? 'Erkek'
     ];
 }
 ?>
